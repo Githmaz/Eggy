@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125" fill="none">
+  <!-- Egg shape -->
+  <ellipse cx="50" cy="62" rx="35" ry="45" fill="url(#eggGradient)" stroke="#E0D5C5" stroke-width="2"/>
+
+  <!-- Yolk -->
+  <circle cx="50" cy="52" r="14" fill="url(#yolkGradient)"/>
+
+  <!-- Shine -->
+  <ellipse cx="38" cy="38" rx="8" ry="6" fill="rgba(255,255,255,0.6)" filter="blur(2px)"/>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="eggGradient" x1="50" y1="17" x2="50" y2="107" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFEF5"/>
+      <stop offset="0.5" stop-color="#F5F0E6"/>
+      <stop offset="1" stop-color="#EAE4D8"/>
+    </linearGradient>
+    <linearGradient id="yolkGradient" x1="50" y1="38" x2="50" y2="66" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD93D"/>
+      <stop offset="1" stop-color="#FF9500"/>
+    </linearGradient>
+  </defs>
+</svg>
