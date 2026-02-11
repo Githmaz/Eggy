@@ -1,30 +1,25 @@
-import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import theme from './theme/theme';
+import { ThemeProvider } from './context/ThemeContext';
 import { TimerProvider } from './context/TimerContext';
 import { SplashPage, TimerPage, HistoryPage, BenefitsPage } from './pages';
-import { BottomNav } from './components';
-import TopNotification from './components/common/TopNotification';
-import TopProgressBar from './components/common/TopProgressBar';
+import BottomBar from './components/core/BottomBar';
+import TopNotification from './components/core/TopNotification';
+import ThemeToggle from './components/core/ThemeToggle';
 
 /**
- * Main App Component
- * Sets up theme, global timer context, routing, and navigation
- * Timer persists across all pages via TimerProvider
+ * EGGY APP - 2025 PREMIUM DESIGN
+ * Light Cream / Dark Deep Blue Themes
  */
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <CssBaseline />
       <BrowserRouter>
         <TimerProvider>
-          {/* Global notification when egg is done */}
           <TopNotification />
-
-          {/* Progress bar shown on other pages when cooking */}
-          <TopProgressBar />
+          <ThemeToggle />
 
           <AnimatePresence mode="wait">
             <Routes>
@@ -36,7 +31,7 @@ function App() {
             </Routes>
           </AnimatePresence>
 
-          <BottomNav />
+          <BottomBar />
         </TimerProvider>
       </BrowserRouter>
     </ThemeProvider>

@@ -1,15 +1,18 @@
 import { Box, Typography, IconButton } from '@mui/material';
-import { Close } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTimerContext } from '../../context/TimerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
- * Top Notification Component
- * Shows a notification when the egg is done cooking
- * Appears on all pages with smooth slide-down animation
+ * TOP NOTIFICATION - THEMED
+ *
+ * Premium notification when egg is done.
+ * Appears on all pages.
  */
+
 const TopNotification = () => {
   const { showNotification, dismissNotification, currentEggName } = useTimerContext();
+  const { tokens, isDark } = useTheme();
 
   return (
     <AnimatePresence>
@@ -26,68 +29,68 @@ const TopNotification = () => {
             transform: 'translateX(-50%)',
             zIndex: 2000,
             width: '90%',
-            maxWidth: 400,
+            maxWidth: 340,
           }}
         >
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 2,
+              gap: 1.5,
               p: 2,
-              px: 2.5,
+              bgcolor: isDark ? tokens.surface.elevated : tokens.surface.nav,
               borderRadius: 4,
-              background: 'linear-gradient(135deg, #34C759 0%, #28A745 100%)',
-              boxShadow: '0 8px 32px rgba(52, 199, 89, 0.35)',
-              color: 'white',
+              boxShadow: isDark
+                ? `0 10px 40px rgba(0,0,0,0.4), 0 0 60px ${tokens.accent.glow}`
+                : '0 10px 40px rgba(0,0,0,0.15)',
+              backdropFilter: 'blur(20px)',
+              border: `1px solid ${tokens.surface.navBorder}`,
             }}
           >
-            {/* Icon */}
             <Box
               sx={{
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 borderRadius: '50%',
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                bgcolor: `${tokens.success}20`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.5rem',
-                flexShrink: 0,
+                fontSize: '1.1rem',
               }}
             >
               🥚
             </Box>
 
-            {/* Text */}
             <Box sx={{ flex: 1 }}>
               <Typography
-                variant="body1"
-                sx={{ fontWeight: 700, lineHeight: 1.2 }}
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: tokens.text.primary,
+                }}
               >
                 Your egg is ready!
               </Typography>
               <Typography
-                variant="caption"
-                sx={{ opacity: 0.9 }}
+                sx={{
+                  fontSize: '0.75rem',
+                  color: tokens.text.secondary,
+                }}
               >
-                {currentEggName} - perfectly cooked
+                {currentEggName}
               </Typography>
             </Box>
 
-            {/* Close button */}
             <IconButton
               size="small"
               onClick={dismissNotification}
               sx={{
-                color: 'white',
-                bgcolor: 'rgba(255, 255, 255, 0.15)',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.25)',
-                },
+                color: tokens.text.tertiary,
+                '&:hover': { color: tokens.text.primary },
               }}
             >
-              <Close fontSize="small" />
+              <span style={{ fontSize: '1.25rem' }}>×</span>
             </IconButton>
           </Box>
         </motion.div>

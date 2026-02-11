@@ -1,219 +1,197 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import Bubbles from '../components/core/Bubbles';
 
 /**
- * Splash / Welcome Screen
- * Shows EVERY time the user loads/refreshes the app
- * Waits for user to click "Let's Cook" - no auto-navigation
+ * SPLASH PAGE - THEMED PREMIUM
+ *
+ * Clean, minimal, premium entrance.
+ * Shows every refresh.
+ * Waits for "Let's Cook" click.
  */
+
 const SplashPage = () => {
   const navigate = useNavigate();
-  const [showContent, setShowContent] = useState(false);
+  const { tokens, isDark } = useTheme();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Show button after initial animation
-    const timer = setTimeout(() => {
-      setShowContent(true);
-    }, 800);
-
+    const timer = setTimeout(() => setReady(true), 500);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleStart = () => {
-    navigate('/timer', { replace: true });
-  };
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
+        background: tokens.bg.gradient,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #FAFAF9 0%, #F5F5F4 50%, #FAFAF9 100%)',
+        px: 4,
         position: 'relative',
         overflow: 'hidden',
-        px: 3,
+        transition: 'background 0.4s ease',
       }}
     >
-      {/* Subtle decorative gradient orb */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.6 }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
-        style={{
-          position: 'absolute',
-          width: '140vw',
-          height: '140vw',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 149, 0, 0.08) 0%, transparent 60%)',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Background bubbles */}
+      <Bubbles isBoiling={false} />
 
-      {/* Main content */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          zIndex: 1,
-          maxWidth: 340,
-        }}
+      {/* Animated Egg */}
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+        style={{ position: 'relative', zIndex: 1 }}
       >
-        {/* Animated Egg Icon */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{
-            duration: 0.7,
-            delay: 0.1,
-            type: 'spring',
-            stiffness: 180,
-            damping: 15,
-          }}
-        >
+        {/* Glass circle behind egg in dark mode */}
+        {isDark && (
           <Box
             sx={{
-              width: { xs: 100, sm: 120 },
-              height: { xs: 125, sm: 150 },
-              background: 'linear-gradient(145deg, #FFFFFF 0%, #F8F8F6 50%, #F0EDE8 100%)',
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              boxShadow: `
-                0 16px 48px rgba(0, 0, 0, 0.08),
-                0 4px 16px rgba(0, 0, 0, 0.04),
-                inset 0 -8px 24px rgba(0, 0, 0, 0.02)
+              position: 'absolute',
+              top: -20,
+              left: -20,
+              right: -20,
+              bottom: -20,
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: `0 0 60px ${tokens.accent.glow}`,
+            }}
+          />
+        )}
+
+        <Box
+          sx={{
+            width: 100,
+            height: 125,
+            background: isDark
+              ? 'linear-gradient(165deg, #F0EDE8 0%, #E8E4DF 40%, #DDD8D0 100%)'
+              : 'linear-gradient(165deg, #FFFFFF 0%, #FFFBF5 40%, #FFF0E5 100%)',
+            borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+            boxShadow: isDark
+              ? `
+                0 20px 50px rgba(0,0,0,0.3),
+                0 8px 20px rgba(0,0,0,0.2),
+                inset 0 -10px 30px rgba(0,0,0,0.05),
+                inset 0 5px 20px rgba(255,255,255,0.4)
+              `
+              : `
+                0 20px 50px rgba(0,0,0,0.08),
+                0 8px 20px rgba(0,0,0,0.04),
+                inset 0 -10px 30px rgba(0,0,0,0.02),
+                inset 0 5px 20px rgba(255,255,255,0.9)
               `,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-            }}
-          >
-            {/* Yolk */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.4, duration: 0.4, type: 'spring' }}
-              style={{
-                width: '38%',
-                height: '30%',
-                borderRadius: '50%',
-                background: 'linear-gradient(145deg, #FFD93D 0%, #FF9500 100%)',
-                boxShadow: 'inset -3px -3px 10px rgba(0, 0, 0, 0.08)',
-                position: 'absolute',
-                top: '35%',
-              }}
-            />
-
-            {/* Shine */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '15%',
-                left: '25%',
-                width: '18%',
-                height: '10%',
-                background: 'rgba(255, 255, 255, 0.8)',
-                borderRadius: '50%',
-                filter: 'blur(2px)',
-              }}
-            />
-          </Box>
-        </motion.div>
-
-        {/* App Name */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Typography
-            variant="h1"
-            sx={{
-              mt: 4,
-              fontSize: { xs: '2.75rem', sm: '3.5rem' },
-              fontWeight: 800,
-              background: 'linear-gradient(135deg, #FF9500 0%, #E08600 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.03em',
-            }}
-          >
-            Eggy
-          </Typography>
-        </motion.div>
-
-        {/* Tagline */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <Typography
-            variant="body1"
-            sx={{
-              mt: 1,
-              color: 'text.secondary',
-              fontWeight: 400,
-              textAlign: 'center',
-              fontSize: { xs: '1rem', sm: '1.125rem' },
-            }}
-          >
-            Perfect eggs, every time.
-          </Typography>
-        </motion.div>
-
-        {/* Let's Cook Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{
-            opacity: showContent ? 1 : 0,
-            y: showContent ? 0 : 20
+            position: 'relative',
+            zIndex: 1,
           }}
-          transition={{ duration: 0.4 }}
-          style={{ width: '100%', marginTop: 48 }}
         >
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleStart}
-            fullWidth
-            sx={{
-              py: 1.75,
-              fontSize: '1.1rem',
-              borderRadius: 4,
-              fontWeight: 700,
-              boxShadow: '0 8px 24px rgba(255, 149, 0, 0.3)',
-              '&:hover': {
-                boxShadow: '0 12px 32px rgba(255, 149, 0, 0.4)',
-              },
+          {/* Yolk */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3, type: 'spring' }}
+            style={{
+              position: 'absolute',
+              top: '28%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '38%',
+              height: '30%',
+              borderRadius: '50%',
+              background: isDark
+                ? `linear-gradient(145deg, #7BBFEF 0%, ${tokens.accent.primary} 100%)`
+                : `linear-gradient(145deg, #FFD54F 0%, ${tokens.accent.primary} 100%)`,
             }}
-          >
-            Let's Cook
-          </Button>
-        </motion.div>
-      </Box>
+          />
 
-      {/* Version / branding */}
+          {/* Highlight */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '12%',
+              left: '20%',
+              width: '22%',
+              height: '12%',
+              borderRadius: '50%',
+              background: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)',
+              filter: 'blur(2px)',
+            }}
+          />
+        </Box>
+      </motion.div>
+
+      {/* Text */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+        style={{ position: 'relative', zIndex: 1 }}
+      >
+        <Typography
+          variant="h1"
+          sx={{
+            mt: 4,
+            fontSize: { xs: '2.5rem', sm: '3rem' },
+            fontWeight: 800,
+            color: tokens.text.primary,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          Eggy
+        </Typography>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: showContent ? 0.5 : 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        style={{
-          position: 'absolute',
-          bottom: 32,
-        }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.4 }}
+        style={{ position: 'relative', zIndex: 1 }}
       >
-        <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.7rem' }}>
-          v1.0 - Made with care
+        <Typography
+          sx={{
+            mt: 1,
+            color: tokens.text.secondary,
+            fontSize: '1rem',
+          }}
+        >
+          Perfect eggs, every time.
         </Typography>
+      </motion.div>
+
+      {/* Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : 20 }}
+        transition={{ duration: 0.4 }}
+        style={{ marginTop: 48, width: '100%', maxWidth: 280, position: 'relative', zIndex: 1 }}
+      >
+        <motion.button
+          onClick={() => navigate('/timer', { replace: true })}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          style={{
+            width: '100%',
+            padding: '18px 32px',
+            fontSize: '1rem',
+            fontWeight: 600,
+            border: 'none',
+            borderRadius: 16,
+            cursor: 'pointer',
+            background: tokens.accent.gradient,
+            color: '#FFFFFF',
+            boxShadow: isDark
+              ? `0 8px 30px ${tokens.accent.glow}, 0 0 60px ${tokens.accent.glow}`
+              : `0 8px 24px ${tokens.accent.glow}`,
+          }}
+        >
+          Let's Cook
+        </motion.button>
       </motion.div>
     </Box>
   );

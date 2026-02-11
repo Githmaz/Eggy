@@ -1,198 +1,226 @@
-import { Box, Typography, Card, CardContent } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import PageContainer from '../components/common/PageContainer';
 import { EGG_BENEFITS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 /**
- * Benefits Page
- * Educational content about egg health benefits
- * Clean, modern infographic-style presentation
+ * BENEFITS PAGE - THEMED PREMIUM
+ *
+ * Modern infographic style.
+ * Light: Cream background, warm cards
+ * Dark: Deep blue, glass cards with glow
  */
-const BenefitsPage = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-      },
-    },
-  };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 24 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.4,
-        ease: 'easeOut',
-      },
-    },
-  };
+const BenefitCard = ({ benefit, index, tokens, isDark }) => {
+  const iconBg = isDark
+    ? {
+        protein: 'rgba(254, 226, 226, 0.15)',
+        brain: 'rgba(219, 234, 254, 0.15)',
+        energy: 'rgba(254, 243, 199, 0.15)',
+        muscle: 'rgba(209, 250, 229, 0.15)',
+        eyes: 'rgba(224, 231, 255, 0.15)',
+        heart: 'rgba(252, 231, 243, 0.15)',
+      }
+    : {
+        protein: '#FEE2E2',
+        brain: '#DBEAFE',
+        energy: '#FEF3C7',
+        muscle: '#D1FAE5',
+        eyes: '#E0E7FF',
+        heart: '#FCE7F3',
+      };
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08 }}
+    >
+      <Box
+        sx={{
+          p: 2.5,
+          bgcolor: isDark ? tokens.bg.card : tokens.bg.cardSolid,
+          borderRadius: 4,
+          boxShadow: tokens.shadow.soft,
+          display: 'flex',
+          gap: 2,
+          backdropFilter: isDark ? 'blur(10px)' : 'none',
+          border: isDark ? `1px solid ${tokens.surface.navBorder}` : 'none',
+        }}
       >
-        <Typography
-          variant="h4"
-          align="center"
-          sx={{ fontWeight: 700, mb: 0.5 }}
-        >
-          Why Eat Eggs?
-        </Typography>
-        <Typography
-          variant="body2"
-          align="center"
-          color="text.secondary"
-          sx={{ mb: 3, maxWidth: 280, mx: 'auto' }}
-        >
-          Discover the health benefits of eggs
-        </Typography>
-      </motion.div>
-
-      {/* Hero Egg */}
-      <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ duration: 0.5, type: 'spring', stiffness: 180 }}
-        style={{ textAlign: 'center', marginBottom: 28 }}
-      >
+        {/* Icon */}
         <Box
           sx={{
-            display: 'inline-flex',
+            width: 44,
+            height: 44,
+            borderRadius: 3,
+            bgcolor: iconBg[benefit.id] || (isDark ? 'rgba(255,255,255,0.1)' : '#F0F0F0'),
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%)',
-            fontSize: '2.5rem',
-            boxShadow: '0 4px 20px rgba(255, 149, 0, 0.15)',
+            fontSize: '1.25rem',
+            flexShrink: 0,
           }}
         >
-          🥚
+          {benefit.icon}
         </Box>
-      </motion.div>
 
-      {/* Benefits Grid */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-            gap: 2,
-          }}
-        >
-          {EGG_BENEFITS.map((benefit) => (
-            <motion.div
-              key={benefit.id}
-              variants={cardVariants}
-              whileHover={{ scale: 1.01, y: -2 }}
-              transition={{ duration: 0.2 }}
+        {/* Content */}
+        <Box sx={{ flex: 1 }}>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.9375rem',
+              color: tokens.text.primary,
+              mb: 0.5,
+            }}
+          >
+            {benefit.title}
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: '0.8125rem',
+              color: tokens.text.secondary,
+              lineHeight: 1.5,
+            }}
+          >
+            {benefit.description}
+          </Typography>
+
+          {/* Stat badge */}
+          <Box
+            sx={{
+              display: 'inline-block',
+              mt: 1.5,
+              px: 1.5,
+              py: 0.5,
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.6875rem',
+                fontWeight: 600,
+                color: tokens.text.tertiary,
+              }}
             >
-              <Card
-                sx={{
-                  height: '100%',
-                  background: '#FFFFFF',
-                  overflow: 'visible',
-                  position: 'relative',
-                }}
-              >
-                <CardContent sx={{ p: 2.5, pt: 4 }}>
-                  {/* Icon */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: -14,
-                      left: 16,
-                      width: 40,
-                      height: 40,
-                      borderRadius: 2.5,
-                      background: `linear-gradient(135deg, ${benefit.color}ee, ${benefit.color})`,
-                      boxShadow: `0 4px 12px ${benefit.color}35`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.25rem',
-                    }}
-                  >
-                    {benefit.icon}
-                  </Box>
-
-                  {/* Content */}
-                  <Typography variant="body1" sx={{ fontWeight: 700, mb: 0.75 }}>
-                    {benefit.title}
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ lineHeight: 1.55, mb: 1.5, fontSize: '0.8125rem' }}
-                  >
-                    {benefit.description}
-                  </Typography>
-
-                  {/* Stats badge */}
-                  <Box
-                    sx={{
-                      display: 'inline-block',
-                      px: 1.25,
-                      py: 0.375,
-                      borderRadius: 1.5,
-                      bgcolor: `${benefit.color}12`,
-                      color: benefit.color,
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                    }}
-                  >
-                    {benefit.stats}
-                  </Box>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+              {benefit.stats}
+            </Typography>
+          </Box>
         </Box>
-      </motion.div>
+      </Box>
+    </motion.div>
+  );
+};
 
-      {/* Footer tip */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
-      >
-        <Box
-          sx={{
-            mt: 3,
-            p: 2.5,
-            borderRadius: 3,
-            background: 'rgba(255, 149, 0, 0.05)',
-            border: '1px solid rgba(255, 149, 0, 0.12)',
-            textAlign: 'center',
-          }}
+const BenefitsPage = () => {
+  const { tokens, isDark } = useTheme();
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: tokens.bg.gradient,
+        pb: 14,
+        transition: 'background 0.4s ease',
+      }}
+    >
+      <Box sx={{ maxWidth: 480, mx: 'auto', px: 2.5, pt: 4 }}>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
-            Pro Tip
+          <Typography variant="h2" sx={{ mb: 1, color: tokens.text.primary }}>
+            Why Eggs?
           </Typography>
           <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.25, fontSize: '0.8125rem' }}
+            sx={{
+              color: tokens.text.secondary,
+              fontSize: '0.9375rem',
+              mb: 4,
+            }}
           >
-            Pair eggs with vegetables for maximum nutrition.
+            Discover the health benefits of eggs
           </Typography>
+        </motion.div>
+
+        {/* Hero */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 3,
+              mb: 3,
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                bgcolor: isDark ? `${tokens.accent.primary}30` : `${tokens.accent.primary}18`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2.5rem',
+                boxShadow: isDark ? `0 0 40px ${tokens.accent.glow}` : 'none',
+              }}
+            >
+              🥚
+            </Box>
+          </Box>
+        </motion.div>
+
+        {/* Benefits */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {EGG_BENEFITS.map((benefit, index) => (
+            <BenefitCard
+              key={benefit.id}
+              benefit={benefit}
+              index={index}
+              tokens={tokens}
+              isDark={isDark}
+            />
+          ))}
         </Box>
-      </motion.div>
-    </PageContainer>
+
+        {/* Tip */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Box
+            sx={{
+              mt: 4,
+              p: 2.5,
+              borderRadius: 4,
+              bgcolor: isDark ? `${tokens.accent.primary}20` : `${tokens.accent.primary}0F`,
+              textAlign: 'center',
+              backdropFilter: isDark ? 'blur(10px)' : 'none',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.8125rem',
+                color: tokens.text.secondary,
+              }}
+            >
+              Pair eggs with vegetables for maximum nutrition
+            </Typography>
+          </Box>
+        </motion.div>
+      </Box>
+    </Box>
   );
 };
 
