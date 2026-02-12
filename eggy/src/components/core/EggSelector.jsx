@@ -4,25 +4,32 @@ import { EGG_PRESETS, formatTime } from '../../utils/constants';
 import { useTheme } from '../../context/ThemeContext';
 
 /**
- * EGG SELECTOR - THEMED
+ * EGG SELECTOR - Premium Pill Segmented Control
  *
- * Premium segmented control for egg type selection.
- * Includes Soft / Medium / Hard presets + Custom option.
+ * Modern glass/cream pill buttons for egg type selection.
+ * Single source of truth: all state comes from TimerContext via props.
+ * No local state - just displays and triggers callbacks.
  *
- * Fixed: Improved click handling for reliable touch/click response
+ * Features:
+ * - Glass effect in dark mode
+ * - Soft cream elevated style in light mode
+ * - Active state glow
+ * - Smooth hover animation
+ * - Clear visual selected state
  */
 
-const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect, disabled = false }) => {
+const EggSelector = ({
+  selected,        // Currently selected preset ID from TimerContext
+  customTime,      // Custom time value from TimerContext
+  useCustom,       // Boolean from TimerContext
+  onSelect,        // Calls TimerContext.selectPreset(presetId)
+  onCustomSelect,  // Calls TimerContext.setCustomDuration(customTime)
+  disabled = false,
+}) => {
   const { tokens, isDark } = useTheme();
   const presets = Object.values(EGG_PRESETS);
 
-  // Calculate selected index (including custom as last option)
-  const allOptions = [...presets, { id: 'custom', name: 'Custom' }];
-  const selectedIndex = useCustom
-    ? allOptions.length - 1
-    : presets.findIndex((p) => p.id === selected);
-
-  // Egg type visual indicators
+  // Type colors for visual indicators
   const typeColors = {
     soft: isDark ? '#7BBFEF' : '#FFB84D',
     medium: isDark ? '#5BA4D9' : '#FF8C42',
@@ -30,59 +37,81 @@ const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect
     custom: tokens.accent.primary,
   };
 
-  // Handle preset click
-  const handlePresetClick = (presetId) => {
-    if (disabled) return;
-    onSelect(presetId);
-  };
+  // Premium button styling
+  const getButtonStyle = (isSelected) => ({
+    // Base styles
+    position: 'relative',
+    flex: 1,
+    minWidth: 72,
+    py: 1.5,
+    px: 1,
+    border: 'none',
+    borderRadius: 3,
+    cursor: disabled ? 'default' : 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 0.5,
+    opacity: disabled ? 0.5 : 1,
+    WebkitTapHighlightColor: 'transparent',
+    touchAction: 'manipulation',
+    userSelect: 'none',
+    transition: 'all 0.2s ease',
 
-  // Handle custom click
-  const handleCustomClick = () => {
-    if (disabled) return;
-    onCustomSelect();
-  };
+    // Theme-aware background
+    background: isSelected
+      ? isDark
+        ? 'rgba(91, 164, 217, 0.2)'
+        : 'rgba(255, 255, 255, 0.95)'
+      : 'transparent',
+
+    // Selected state glow
+    boxShadow: isSelected
+      ? isDark
+        ? `0 0 20px ${tokens.accent.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`
+        : '0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.05)'
+      : 'none',
+
+    // Border for selected
+    outline: isSelected
+      ? isDark
+        ? `1px solid ${tokens.accent.primary}50`
+        : '1px solid rgba(0, 0, 0, 0.04)'
+      : 'none',
+
+    '&:hover': !disabled && {
+      background: isSelected
+        ? isDark
+          ? 'rgba(91, 164, 217, 0.25)'
+          : 'rgba(255, 255, 255, 1)'
+        : isDark
+          ? 'rgba(255, 255, 255, 0.05)'
+          : 'rgba(0, 0, 0, 0.02)',
+    },
+  });
 
   return (
     <Box
       sx={{
-        position: 'relative',
-        display: 'inline-flex',
-        bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+        display: 'flex',
+        gap: 0.75,
+        p: 0.75,
         borderRadius: 4,
-        p: 0.5,
-        backdropFilter: 'blur(10px)',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)'}`,
+        // Container glass/cream background
+        background: isDark
+          ? 'rgba(255, 255, 255, 0.06)'
+          : 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: isDark
+          ? '1px solid rgba(255, 255, 255, 0.1)'
+          : '1px solid rgba(0, 0, 0, 0.04)',
+        boxShadow: isDark
+          ? 'inset 0 1px 0 rgba(255,255,255,0.05)'
+          : '0 4px 24px rgba(0, 0, 0, 0.06)',
       }}
     >
-      {/* Sliding indicator - MUST have pointerEvents: none */}
-      <motion.div
-        layoutId="selector-indicator"
-        initial={false}
-        animate={{
-          x: `${selectedIndex * 100}%`,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 400,
-          damping: 30,
-        }}
-        style={{
-          position: 'absolute',
-          top: 4,
-          left: 4,
-          width: `calc(${100 / allOptions.length}% - ${8 / allOptions.length}px)`,
-          height: 'calc(100% - 8px)',
-          backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : '#FFFFFF',
-          borderRadius: 12,
-          boxShadow: isDark
-            ? `0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)`
-            : '0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-          zIndex: 0,
-          pointerEvents: 'none', // Critical: prevents click interception
-        }}
-      />
-
-      {/* Preset Options */}
+      {/* Preset Buttons */}
       {presets.map((preset) => {
         const isSelected = !useCustom && selected === preset.id;
         const dotColor = typeColors[preset.id];
@@ -91,33 +120,15 @@ const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect
           <Box
             key={preset.id}
             component={motion.button}
-            onClick={() => handlePresetClick(preset.id)}
-            whileHover={{ scale: disabled ? 1 : 1.02 }}
-            whileTap={{ scale: disabled ? 1 : 0.95 }}
-            sx={{
-              position: 'relative',
-              zIndex: 2,
-              flex: 1,
-              minWidth: 80,
-              p: '14px 16px',
-              border: 'none',
-              background: 'transparent',
-              cursor: disabled ? 'default' : 'pointer',
-              borderRadius: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 0.5,
-              opacity: disabled ? 0.5 : 1,
-              WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
-              userSelect: 'none',
-              '&:active': {
-                transform: 'scale(0.95)',
-              },
+            onClick={() => {
+              if (disabled) return;
+              onSelect(preset.id);
             }}
+            whileHover={{ scale: disabled ? 1 : 1.02 }}
+            whileTap={{ scale: disabled ? 1 : 0.96 }}
+            sx={getButtonStyle(isSelected)}
           >
-            {/* Dot indicator - no pointer events */}
+            {/* Colored dot indicator */}
             <Box
               sx={{
                 width: 8,
@@ -125,30 +136,33 @@ const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect
                 borderRadius: '50%',
                 bgcolor: dotColor,
                 opacity: isSelected ? 1 : 0.4,
-                transition: 'opacity 0.2s',
-                boxShadow: isSelected && isDark ? `0 0 8px ${dotColor}` : 'none',
+                transition: 'all 0.2s',
+                boxShadow: isSelected
+                  ? `0 0 8px ${dotColor}, 0 0 16px ${dotColor}50`
+                  : 'none',
                 pointerEvents: 'none',
               }}
             />
 
-            {/* Label - no pointer events */}
+            {/* Label */}
             <Typography
               sx={{
-                fontSize: '0.8125rem',
+                fontSize: '0.75rem',
                 fontWeight: isSelected ? 700 : 500,
                 color: isSelected ? tokens.text.primary : tokens.text.secondary,
                 transition: 'all 0.2s',
                 pointerEvents: 'none',
+                letterSpacing: '0.01em',
               }}
             >
               {preset.id.charAt(0).toUpperCase() + preset.id.slice(1)}
             </Typography>
 
-            {/* Duration - no pointer events */}
+            {/* Duration */}
             <Typography
               sx={{
-                fontSize: '0.6875rem',
-                color: tokens.text.tertiary,
+                fontSize: '0.625rem',
+                color: isSelected ? tokens.text.secondary : tokens.text.tertiary,
                 fontWeight: 500,
                 pointerEvents: 'none',
               }}
@@ -159,35 +173,18 @@ const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect
         );
       })}
 
-      {/* Custom Option */}
+      {/* Custom Button */}
       <Box
         component={motion.button}
-        onClick={handleCustomClick}
-        whileHover={{ scale: disabled ? 1 : 1.02 }}
-        whileTap={{ scale: disabled ? 1 : 0.95 }}
-        sx={{
-          position: 'relative',
-          zIndex: 2,
-          flex: 1,
-          minWidth: 80,
-          p: '14px 16px',
-          border: 'none',
-          background: 'transparent',
-          cursor: disabled ? 'default' : 'pointer',
-          borderRadius: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 0.5,
-          opacity: disabled ? 0.5 : 1,
-          WebkitTapHighlightColor: 'transparent',
-          touchAction: 'manipulation',
-          userSelect: 'none',
-          '&:active': {
-            transform: 'scale(0.95)',
-          },
+        onClick={() => {
+          if (disabled) return;
+          onCustomSelect();
         }}
+        whileHover={{ scale: disabled ? 1 : 1.02 }}
+        whileTap={{ scale: disabled ? 1 : 0.96 }}
+        sx={getButtonStyle(useCustom)}
       >
+        {/* Accent dot */}
         <Box
           sx={{
             width: 8,
@@ -195,28 +192,33 @@ const EggSelector = ({ selected, customTime, useCustom, onSelect, onCustomSelect
             borderRadius: '50%',
             bgcolor: tokens.accent.primary,
             opacity: useCustom ? 1 : 0.4,
-            transition: 'opacity 0.2s',
-            boxShadow: useCustom && isDark ? `0 0 8px ${tokens.accent.primary}` : 'none',
+            transition: 'all 0.2s',
+            boxShadow: useCustom
+              ? `0 0 8px ${tokens.accent.primary}, 0 0 16px ${tokens.accent.glow}`
+              : 'none',
             pointerEvents: 'none',
           }}
         />
 
+        {/* Label */}
         <Typography
           sx={{
-            fontSize: '0.8125rem',
+            fontSize: '0.75rem',
             fontWeight: useCustom ? 700 : 500,
             color: useCustom ? tokens.text.primary : tokens.text.secondary,
             transition: 'all 0.2s',
             pointerEvents: 'none',
+            letterSpacing: '0.01em',
           }}
         >
           Custom
         </Typography>
 
+        {/* Time */}
         <Typography
           sx={{
-            fontSize: '0.6875rem',
-            color: tokens.text.tertiary,
+            fontSize: '0.625rem',
+            color: useCustom ? tokens.text.secondary : tokens.text.tertiary,
             fontWeight: 500,
             pointerEvents: 'none',
           }}

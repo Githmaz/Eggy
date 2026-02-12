@@ -254,6 +254,7 @@ const TimerPage = () => {
                   isCompleted={isCompleted}
                   progress={progress}
                   duration={duration}
+                  timeRemaining={timeRemaining}
                   onToggle={toggle}
                   onReset={reset}
                 />

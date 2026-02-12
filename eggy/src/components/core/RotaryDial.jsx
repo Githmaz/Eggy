@@ -1,27 +1,28 @@
-import { useRef, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Box } from '@mui/material';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 
 /**
- * ROTARY DIAL - Premium Mechanical Control
+ * ROTARY DIAL - Premium Mechanical Kitchen Timer
  *
- * Behaves like a real kitchen timer knob:
- * - Indicator dot starts at 12 o'clock (0 degrees)
- * - Rotates FULL 360 degrees proportional to elapsed time
- * - rotation = (elapsed / total) * 360 = progress * 360
- * - Linear animation (no spring overshoot)
- * - Pausing freezes rotation at exact angle
- * - Reset returns rotation to 0
+ * 20-minute scale: 360° = 20 minutes
  *
- * Visual features:
- * - Metallic gradient surface
- * - Inner lighting effect
- * - Subtle reflection highlight
- * - Soft realistic shadow
- * - Indicator dot at edge
- * - Micro-tick animation every second
+ * Formula: angle = (timeRemaining / 1200) * 360
+ *
+ * | Duration | Starting Angle |
+ * |----------|----------------|
+ * | 20 min   | 360°           |
+ * | 15 min   | 270°           |
+ * | 12 min   | 216°           |
+ * | 10 min   | 180°           |
+ * | 8 min    | 144°           |
+ * | 6 min    | 108°           |
+ * | 0 sec    | 0° (finished)  |
  */
+
+// Maximum dial scale: 20 minutes = 1200 seconds
+const MAX_DIAL_SECONDS = 20 * 60; // 1200
 
 const RotaryDial = ({
   isRunning = false,
@@ -29,58 +30,29 @@ const RotaryDial = ({
   isCompleted = false,
   progress = 0,
   duration = 0,
+  timeRemaining = 0,
   onToggle,
   onReset,
 }) => {
   const { tokens, isDark } = useTheme();
-  const dialRef = useRef(null);
-  const tickRef = useRef(null);
 
-  // Spring for press feedback only
+  // Spring for press feedback
   const scale = useSpring(1, { stiffness: 400, damping: 25 });
-  const shadowBlur = useSpring(20, { stiffness: 400, damping: 25 });
+  const shadowBlur = useSpring(24, { stiffness: 400, damping: 25 });
 
-  // Rotation is calculated directly from progress (LINEAR, no spring)
-  // rotation = progress * 360 degrees
-  // This is mathematically tied to timer: elapsed/total * 360
-  const [rotation, setRotation] = useState(0);
+  // Calculate rotation DIRECTLY from timeRemaining
+  // Formula: angle = (timeRemaining / MAX_DIAL_SECONDS) * 360
+  const rotation = (timeRemaining / MAX_DIAL_SECONDS) * 360;
 
-  // Micro-tick scale animation
-  const tickScale = useSpring(1, { stiffness: 600, damping: 15 });
-
-  // Update rotation based on progress - LINEAR mapping
-  // When running or paused: rotation = progress * 360
-  // When reset (progress = 0): rotation = 0
-  useEffect(() => {
-    // Calculate exact rotation from progress
-    // progress = (duration - timeRemaining) / duration = elapsed / total
-    // rotation = progress * 360
-    const targetRotation = progress * 360;
-    setRotation(targetRotation);
-  }, [progress]);
-
-  // Micro-tick every second when running
-  useEffect(() => {
-    if (!isRunning) return;
-
-    const interval = setInterval(() => {
-      // Quick micro-pulse for mechanical feel
-      tickScale.set(0.98);
-      setTimeout(() => tickScale.set(1), 80);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning, tickScale]);
-
-  // Handle press
+  // Handle press feedback
   const handlePressStart = () => {
     scale.set(0.97);
-    shadowBlur.set(12);
+    shadowBlur.set(16);
   };
 
   const handlePressEnd = () => {
     scale.set(1);
-    shadowBlur.set(20);
+    shadowBlur.set(24);
   };
 
   const handleClick = () => {
@@ -99,32 +71,47 @@ const RotaryDial = ({
     return 'Start';
   };
 
-  // Colors based on theme
-  const dialColors = isDark
+  // Premium color scheme based on theme
+  const dialColors = useMemo(() => isDark
     ? {
-        outer: 'linear-gradient(145deg, #2A4A6A 0%, #1A3A5A 50%, #0F2A4A 100%)',
-        inner: 'linear-gradient(145deg, #3A5A7A 0%, #2A4A6A 100%)',
-        ring: 'linear-gradient(145deg, #4A6A8A 0%, #3A5A7A 100%)',
-        highlight: 'rgba(123, 191, 239, 0.3)',
-        shadow: 'rgba(0, 0, 0, 0.5)',
+        // Dark mode - deep metallic blue
+        outerRing: 'linear-gradient(145deg, #1A3A5A 0%, #0F2A4A 40%, #0A1F38 100%)',
+        outerShadow: '0 12px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4)',
+        middleRing: 'linear-gradient(145deg, #2A4A6A 0%, #1F3F5F 50%, #1A3A5A 100%)',
+        innerKnob: 'linear-gradient(145deg, #3A5A7A 0%, #2A4A6A 50%, #1F3F5F 100%)',
+        highlight: 'rgba(123, 191, 239, 0.4)',
+        highlightStrong: 'rgba(123, 191, 239, 0.6)',
+        shadow: 'rgba(0, 0, 0, 0.7)',
         glow: tokens.accent.primary,
+        glowOuter: `0 0 60px ${tokens.accent.primary}40, 0 0 100px ${tokens.accent.primary}20`,
         text: tokens.text.primary,
         indicator: tokens.accent.primary,
+        tickMark: 'rgba(255, 255, 255, 0.25)',
+        tickMarkActive: 'rgba(123, 191, 239, 0.6)',
+        bevel: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
       }
     : {
-        outer: 'linear-gradient(145deg, #E8E0D8 0%, #D8D0C8 50%, #C8C0B8 100%)',
-        inner: 'linear-gradient(145deg, #F8F0E8 0%, #E8E0D8 100%)',
-        ring: 'linear-gradient(145deg, #FFFFFF 0%, #F0E8E0 100%)',
-        highlight: 'rgba(255, 255, 255, 0.8)',
-        shadow: 'rgba(0, 0, 0, 0.15)',
+        // Light mode - warm metallic cream
+        outerRing: 'linear-gradient(145deg, #D8D0C8 0%, #C8C0B8 40%, #B8B0A8 100%)',
+        outerShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08)',
+        middleRing: 'linear-gradient(145deg, #F0E8E0 0%, #E8E0D8 50%, #DDD5CD 100%)',
+        innerKnob: 'linear-gradient(145deg, #FFFFFF 0%, #F8F0E8 50%, #EDE5DD 100%)',
+        highlight: 'rgba(255, 255, 255, 0.9)',
+        highlightStrong: 'rgba(255, 255, 255, 1)',
+        shadow: 'rgba(0, 0, 0, 0.2)',
         glow: tokens.accent.primary,
+        glowOuter: `0 0 40px ${tokens.accent.glow}, 0 0 80px ${tokens.accent.glow}50`,
         text: tokens.text.primary,
         indicator: tokens.accent.primary,
-      };
+        tickMark: 'rgba(0, 0, 0, 0.12)',
+        tickMarkActive: 'rgba(224, 123, 103, 0.5)',
+        bevel: 'inset 0 2px 6px rgba(255,255,255,0.8), inset 0 -2px 6px rgba(0,0,0,0.08)',
+      }
+  , [isDark, tokens]);
 
-  const dialSize = 140;
-  const innerSize = 110;
-  const knobSize = 80;
+  const dialSize = 160;
+  const middleSize = 130;
+  const knobSize = 90;
 
   return (
     <Box
@@ -137,105 +124,120 @@ const RotaryDial = ({
         justifyContent: 'center',
       }}
     >
-      {/* Glow effect when running */}
-      {isRunning && (
-        <motion.div
-          animate={{
-            opacity: [0.3, 0.6, 0.3],
-            scale: [1, 1.05, 1],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          style={{
-            position: 'absolute',
-            width: dialSize + 40,
-            height: dialSize + 40,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${dialColors.glow}40 0%, transparent 70%)`,
-            filter: 'blur(15px)',
-          }}
-        />
-      )}
+      {/* Outer glow effect */}
+      <Box
+        sx={{
+          position: 'absolute',
+          width: dialSize + 60,
+          height: dialSize + 60,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${dialColors.glow}${isRunning ? '30' : '15'} 0%, transparent 70%)`,
+          filter: 'blur(20px)',
+          opacity: isRunning ? 1 : 0.5,
+          transition: 'opacity 0.3s ease',
+        }}
+      />
 
-      {/* Outer dial base - shadow ring */}
-      <motion.div
-        style={{
+      {/* Outer ring - base shadow ring */}
+      <Box
+        sx={{
           position: 'absolute',
           width: dialSize,
           height: dialSize,
           borderRadius: '50%',
-          background: dialColors.outer,
+          background: dialColors.outerRing,
           boxShadow: `
-            0 8px 24px ${dialColors.shadow},
-            0 2px 8px ${dialColors.shadow},
-            inset 0 -2px 6px rgba(0,0,0,0.2),
-            inset 0 2px 6px ${dialColors.highlight}
+            ${dialColors.outerShadow},
+            inset 0 -3px 8px rgba(0,0,0,0.3),
+            inset 0 3px 8px ${dialColors.highlight}
           `,
         }}
       />
 
-      {/* Middle ring - metallic band */}
+      {/* Middle rotating ring */}
       <motion.div
-        ref={dialRef}
         style={{
           position: 'absolute',
-          width: innerSize,
-          height: innerSize,
+          width: middleSize,
+          height: middleSize,
           borderRadius: '50%',
-          background: dialColors.ring,
+          background: dialColors.middleRing,
           boxShadow: `
-            inset 0 -3px 8px rgba(0,0,0,0.15),
-            inset 0 3px 8px ${dialColors.highlight}
+            ${dialColors.bevel},
+            0 4px 16px ${dialColors.shadow}
           `,
-          // LINEAR rotation tied to progress (no spring overshoot)
-          // Updates smoothly every second as timer ticks
+          // DIRECT rotation from timeRemaining - NO animation except when running
           transform: `rotate(${rotation}deg)`,
-          transition: isRunning ? 'transform 1s linear' : 'transform 0.3s ease-out',
-          scale: tickScale,
+          transition: isRunning ? 'transform 1s linear' : 'none',
         }}
       >
-        {/* Indicator dot */}
+        {/* Light reflection overlay */}
         <Box
           sx={{
             position: 'absolute',
-            top: 8,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 6,
-            height: 6,
+            top: '5%',
+            left: '10%',
+            width: '40%',
+            height: '25%',
             borderRadius: '50%',
-            bgcolor: dialColors.indicator,
-            boxShadow: isRunning
-              ? `0 0 8px ${dialColors.indicator}, 0 0 12px ${dialColors.indicator}`
-              : `0 1px 2px rgba(0,0,0,0.3)`,
+            background: `linear-gradient(180deg, ${dialColors.highlightStrong} 0%, transparent 100%)`,
+            filter: 'blur(8px)',
+            opacity: 0.4,
+            pointerEvents: 'none',
           }}
         />
 
-        {/* Tick marks */}
-        {[...Array(12)].map((_, i) => (
-          <Box
-            key={i}
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: 2,
-              height: 6,
-              bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-              borderRadius: 1,
-              transform: `rotate(${i * 30}deg) translateY(-${innerSize / 2 - 10}px)`,
-              transformOrigin: '0 0',
-            }}
-          />
-        ))}
+        {/* Indicator dot - premium style */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 10,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            bgcolor: dialColors.indicator,
+            boxShadow: isRunning
+              ? `
+                0 0 12px ${dialColors.indicator},
+                0 0 24px ${dialColors.indicator},
+                inset 0 1px 2px rgba(255,255,255,0.5)
+              `
+              : `
+                0 0 6px ${dialColors.indicator}80,
+                inset 0 1px 2px rgba(255,255,255,0.3),
+                0 2px 4px rgba(0,0,0,0.3)
+              `,
+            transition: 'box-shadow 0.3s ease',
+          }}
+        />
+
+        {/* Tick marks - 12 positions */}
+        {[...Array(12)].map((_, i) => {
+          const isMainTick = i % 3 === 0; // Main tick at 0°, 90°, 180°, 270°
+          return (
+            <Box
+              key={i}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: isMainTick ? 3 : 2,
+                height: isMainTick ? 10 : 6,
+                bgcolor: isRunning ? dialColors.tickMarkActive : dialColors.tickMark,
+                borderRadius: 1,
+                transform: `rotate(${i * 30}deg) translateY(-${middleSize / 2 - (isMainTick ? 14 : 10)}px)`,
+                transformOrigin: '0 0',
+                transition: 'background-color 0.3s ease',
+              }}
+            />
+          );
+        })}
       </motion.div>
 
-      {/* Inner knob - pressable */}
+      {/* Inner knob - pressable button */}
       <motion.button
-        ref={tickRef}
         onClick={handleClick}
         onMouseDown={handlePressStart}
         onMouseUp={handlePressEnd}
@@ -249,14 +251,13 @@ const RotaryDial = ({
           borderRadius: '50%',
           border: 'none',
           cursor: 'pointer',
-          background: dialColors.inner,
+          background: dialColors.innerKnob,
           scale,
           boxShadow: useTransform(
             shadowBlur,
             (v) => `
-              0 ${v * 0.4}px ${v}px ${dialColors.shadow},
-              inset 0 -2px 4px rgba(0,0,0,0.1),
-              inset 0 2px 4px ${dialColors.highlight}
+              0 ${v * 0.5}px ${v}px ${dialColors.shadow},
+              ${dialColors.bevel}
             `
           ),
           display: 'flex',
@@ -266,18 +267,33 @@ const RotaryDial = ({
         }}
         whileHover={{ scale: 1.02 }}
       >
-        {/* Center reflection */}
+        {/* Top highlight reflection */}
         <Box
           sx={{
             position: 'absolute',
-            top: '15%',
-            left: '20%',
-            width: '30%',
+            top: '12%',
+            left: '15%',
+            width: '35%',
             height: '20%',
             borderRadius: '50%',
-            background: dialColors.highlight,
+            background: `linear-gradient(180deg, ${dialColors.highlightStrong} 0%, transparent 100%)`,
             filter: 'blur(4px)',
-            opacity: 0.6,
+            opacity: 0.5,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Circular inner bevel */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 4,
+            borderRadius: '50%',
+            background: 'transparent',
+            boxShadow: isDark
+              ? 'inset 0 2px 4px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.2)'
+              : 'inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.05)',
+            pointerEvents: 'none',
           }}
         />
 
@@ -285,30 +301,36 @@ const RotaryDial = ({
         <Box
           component="span"
           sx={{
-            fontSize: '0.8125rem',
-            fontWeight: 600,
+            fontSize: '0.875rem',
+            fontWeight: 700,
             color: dialColors.text,
             letterSpacing: '0.02em',
             position: 'relative',
             zIndex: 1,
+            textShadow: isDark
+              ? '0 1px 2px rgba(0,0,0,0.3)'
+              : '0 1px 1px rgba(255,255,255,0.5)',
           }}
         >
           {getLabel()}
         </Box>
       </motion.button>
 
-      {/* Completion glow */}
+      {/* Completion glow ring */}
       {isCompleted && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           style={{
             position: 'absolute',
-            width: dialSize + 20,
-            height: dialSize + 20,
+            width: dialSize + 24,
+            height: dialSize + 24,
             borderRadius: '50%',
-            border: `2px solid ${tokens.success}`,
-            boxShadow: `0 0 20px ${tokens.success}50`,
+            border: `3px solid ${tokens.success}`,
+            boxShadow: `
+              0 0 30px ${tokens.success}60,
+              inset 0 0 20px ${tokens.success}30
+            `,
           }}
         />
       )}
