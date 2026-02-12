@@ -160,7 +160,7 @@ const SplashPage = () => {
             fontSize: '1rem',
           }}
         >
-          Perfect eggs, every time.
+            Pixieee, we have to cook!
         </Typography>
       </motion.div>
 

@@ -6,3 +6,5 @@ export { default as CustomTimePicker } from './core/CustomTimePicker';
 export { default as BottomBar } from './core/BottomBar';
 export { default as TopNotification } from './core/TopNotification';
 export { default as ThemeToggle } from './core/ThemeToggle';
+export { default as RotaryDial } from './core/RotaryDial';
+export { default as EggSmash } from './core/EggSmash';
