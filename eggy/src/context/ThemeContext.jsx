@@ -1,12 +1,22 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
+import {
+  themeRegistry,
+  getThemeTokens,
+  getThemeAnimations,
+  defaultThemeSettings,
+  THEME_STORAGE_KEY,
+} from '../themes';
 
 /**
  * THEME CONTEXT
  *
- * Manages Light Cream / Dark Deep Blue themes.
- * Persists preference in localStorage.
+ * Multi-theme system supporting:
+ * - Theme styles: 'mechanical' | 'cookingPot'
+ * - Color modes: 'light' | 'dark'
+ *
+ * Persists preferences in localStorage with format:
+ * { "style": "mechanical", "mode": "light" }
  */
 
 const ThemeContext = createContext(null);
@@ -19,139 +29,74 @@ export const useTheme = () => {
   return context;
 };
 
-// Design tokens for both themes
-const tokens = {
-  light: {
-    mode: 'light',
-    // Backgrounds - soft warm cream gradient
-    bg: {
-      primary: '#FDF8F3',
-      secondary: '#FAF5EF',
-      gradient: 'linear-gradient(180deg, #FDF8F3 0%, #F5EDE4 50%, #EDE4D9 100%)',
-      card: 'rgba(255, 255, 255, 0.7)',
-      cardSolid: '#FFFFFF',
-      glass: 'rgba(255, 255, 255, 0.5)',
-    },
-    // Accent - warm coral
-    accent: {
-      primary: '#E07B67',
-      secondary: '#F09080',
-      gradient: 'linear-gradient(135deg, #E8896F 0%, #E07B67 100%)',
-      glow: 'rgba(224, 123, 103, 0.3)',
-    },
-    // Text
-    text: {
-      primary: '#2D2D2D',
-      secondary: '#6B6B6B',
-      tertiary: '#9A9A9A',
-      inverse: '#FFFFFF',
-    },
-    // Surfaces
-    surface: {
-      nav: 'rgba(255, 255, 255, 0.85)',
-      navBorder: 'rgba(0, 0, 0, 0.06)',
-      elevated: '#FFFFFF',
-    },
-    // Bubbles
-    bubble: {
-      primary: 'rgba(255, 255, 255, 0.8)',
-      secondary: 'rgba(255, 255, 255, 0.5)',
-      glow: 'rgba(255, 255, 255, 0.9)',
-    },
-    // Progress
-    progress: {
-      track: 'rgba(0, 0, 0, 0.06)',
-      ring: '#E07B67',
-    },
-    // States
-    success: '#4CAF7C',
-    shadow: {
-      soft: '0 4px 24px rgba(0, 0, 0, 0.06)',
-      medium: '0 8px 32px rgba(0, 0, 0, 0.08)',
-      glow: '0 0 40px rgba(224, 123, 103, 0.2)',
-    },
-    // Wave shapes
-    wave: 'rgba(255, 255, 255, 0.4)',
-  },
-  dark: {
-    mode: 'dark',
-    // Backgrounds - deep blue gradient
-    bg: {
-      primary: '#0A1628',
-      secondary: '#0D1B2A',
-      gradient: 'linear-gradient(180deg, #0D1B2A 0%, #132238 50%, #1B3A5C 100%)',
-      card: 'rgba(255, 255, 255, 0.08)',
-      cardSolid: '#152535',
-      glass: 'rgba(255, 255, 255, 0.1)',
-    },
-    // Accent - light blue
-    accent: {
-      primary: '#5BA4D9',
-      secondary: '#7BBFEF',
-      gradient: 'linear-gradient(135deg, #7BBFEF 0%, #5BA4D9 100%)',
-      glow: 'rgba(91, 164, 217, 0.4)',
-    },
-    // Text
-    text: {
-      primary: '#FFFFFF',
-      secondary: 'rgba(255, 255, 255, 0.7)',
-      tertiary: 'rgba(255, 255, 255, 0.5)',
-      inverse: '#0A1628',
-    },
-    // Surfaces
-    surface: {
-      nav: 'rgba(13, 27, 42, 0.9)',
-      navBorder: 'rgba(255, 255, 255, 0.08)',
-      elevated: '#1A3045',
-    },
-    // Bubbles - more visible in dark mode
-    bubble: {
-      primary: 'rgba(91, 164, 217, 0.6)',
-      secondary: 'rgba(123, 191, 239, 0.4)',
-      glow: 'rgba(91, 164, 217, 0.8)',
-    },
-    // Progress
-    progress: {
-      track: 'rgba(255, 255, 255, 0.12)',
-      ring: '#5BA4D9',
-    },
-    // States
-    success: '#4CAF7C',
-    shadow: {
-      soft: '0 4px 24px rgba(0, 0, 0, 0.3)',
-      medium: '0 8px 32px rgba(0, 0, 0, 0.4)',
-      glow: '0 0 60px rgba(91, 164, 217, 0.3)',
-    },
-    // Wave shapes
-    wave: 'rgba(27, 58, 92, 0.6)',
-  },
+// Migrate old localStorage format to new format
+const migrateOldTheme = () => {
+  const oldTheme = localStorage.getItem('eggy-theme');
+  if (oldTheme) {
+    // Old format was just 'dark' or 'light'
+    const newSettings = {
+      style: 'mechanical',
+      mode: oldTheme === 'dark' ? 'dark' : 'light',
+    };
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newSettings));
+    localStorage.removeItem('eggy-theme');
+    return newSettings;
+  }
+  return null;
+};
+
+// Get stored theme settings
+const getStoredSettings = () => {
+  // Try migration first
+  const migrated = migrateOldTheme();
+  if (migrated) return migrated;
+
+  // Try to load from new format
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      // Validate the settings
+      if (
+        parsed.style &&
+        themeRegistry[parsed.style] &&
+        ['light', 'dark'].includes(parsed.mode)
+      ) {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Invalid theme settings in localStorage');
+    }
+  }
+
+  return defaultThemeSettings;
 };
 
 // Create MUI theme from tokens
-const createAppTheme = (isDark) => {
-  const t = isDark ? tokens.dark : tokens.light;
+const createAppTheme = (tokens) => {
+  const isDark = tokens.mode === 'dark';
 
   return createTheme({
     palette: {
       mode: isDark ? 'dark' : 'light',
       primary: {
-        main: t.accent.primary,
-        light: t.accent.secondary,
+        main: tokens.accent.primary,
+        light: tokens.accent.secondary,
       },
       background: {
-        default: t.bg.primary,
-        paper: t.bg.cardSolid,
+        default: tokens.bg.primary,
+        paper: tokens.bg.cardSolid,
       },
       text: {
-        primary: t.text.primary,
-        secondary: t.text.secondary,
+        primary: tokens.text.primary,
+        secondary: tokens.text.secondary,
       },
       success: {
-        main: t.success,
+        main: tokens.success,
       },
     },
     // Custom design tokens
-    eggy: t,
+    eggy: tokens,
     typography: {
       fontFamily: '"SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, sans-serif',
       h1: {
@@ -201,7 +146,7 @@ const createAppTheme = (isDark) => {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            backgroundColor: t.bg.primary,
+            backgroundColor: tokens.bg.primary,
             transition: 'background-color 0.3s ease',
           },
         },
@@ -211,33 +156,77 @@ const createAppTheme = (isDark) => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Get initial theme from localStorage or default to light
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('eggy-theme');
-    return saved === 'dark';
+  // Initialize from stored settings
+  const [themeStyle, setThemeStyleState] = useState(() => {
+    return getStoredSettings().style;
   });
 
-  // Persist theme preference
+  const [colorMode, setColorMode] = useState(() => {
+    return getStoredSettings().mode;
+  });
+
+  // Persist theme preferences
   useEffect(() => {
-    localStorage.setItem('eggy-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+    localStorage.setItem(
+      THEME_STORAGE_KEY,
+      JSON.stringify({ style: themeStyle, mode: colorMode })
+    );
+  }, [themeStyle, colorMode]);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  // Set theme style with validation
+  const setThemeStyle = (newStyle) => {
+    if (themeRegistry[newStyle]) {
+      setThemeStyleState(newStyle);
+    } else {
+      console.warn(`Unknown theme style: ${newStyle}`);
+    }
+  };
 
-  const theme = useMemo(() => createAppTheme(isDark), [isDark]);
-  const designTokens = useMemo(() => (isDark ? tokens.dark : tokens.light), [isDark]);
+  // Toggle color mode
+  const toggleColorMode = () => {
+    setColorMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Get current tokens
+  const tokens = useMemo(
+    () => getThemeTokens(themeStyle, colorMode),
+    [themeStyle, colorMode]
+  );
+
+  // Get current animations config
+  const animations = useMemo(
+    () => getThemeAnimations(themeStyle),
+    [themeStyle]
+  );
+
+  // Create MUI theme
+  const theme = useMemo(() => createAppTheme(tokens), [tokens]);
+
+  // Convenience derived values
+  const isDark = colorMode === 'dark';
 
   const value = {
+    // Core state
+    themeStyle,
+    colorMode,
     isDark,
-    toggleTheme,
-    tokens: designTokens,
+
+    // Actions
+    setThemeStyle,
+    toggleColorMode,
+
+    // Theme data
+    tokens,
+    animations,
+    themeRegistry,
+
+    // Legacy compatibility
+    toggleTheme: toggleColorMode,
   };
 
   return (
     <ThemeContext.Provider value={value}>
-      <MuiThemeProvider theme={theme}>
-        {children}
-      </MuiThemeProvider>
+      <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
     </ThemeContext.Provider>
   );
 };

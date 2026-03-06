@@ -1,186 +1,265 @@
-import { Box, Typography, Slider } from '@mui/material';
+import { useState, useRef } from 'react';
+import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
-import { formatTime } from '../../utils/constants';
 import { useTheme } from '../../context/ThemeContext';
 
 /**
- * CUSTOM TIME PICKER - THEMED
+ * CUSTOM TIME PICKER - Compact Premium Design
  *
- * Clean, minimal time selector with +/- buttons and slider.
- * Light: White card with coral accents
- * Dark: Glass card with blue accents
+ * Inspired by: Apple timer UI, smart oven interfaces
+ * Style: Clean, mechanical, minimal
+ *
+ * Features:
+ * - Compact horizontal layout
+ * - Subtle +/- buttons
+ * - Thin slider with minimal thumb
+ * - Smooth micro-interactions only
  */
 
 const CustomTimePicker = ({ value, onChange, disabled = false }) => {
   const { tokens, isDark } = useTheme();
+  const sliderRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const minTime = 60; // 1 minute
-  const maxTime = 1200; // 20 minutes
-  const step = 30; // 30 second increments
+  const minTime = 60;
+  const maxTime = 1200;
+  const step = 30;
+
+  const progress = ((value - minTime) / (maxTime - minTime)) * 100;
+
+  // Format time
+  const mins = Math.floor(value / 60);
+  const secs = value % 60;
+  const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   const handleIncrement = () => {
-    onChange(Math.min(value + step, maxTime));
+    if (!disabled && value < maxTime) {
+      onChange(Math.min(value + step, maxTime));
+    }
   };
 
   const handleDecrement = () => {
-    onChange(Math.max(value - step, minTime));
+    if (!disabled && value > minTime) {
+      onChange(Math.max(value - step, minTime));
+    }
   };
+
+  const handleSliderInteraction = (e) => {
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    if (clientX === undefined) return;
+
+    const relativeX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const newValue = Math.round((relativeX * (maxTime - minTime) + minTime) / step) * step;
+    onChange(Math.max(minTime, Math.min(maxTime, newValue)));
+  };
+
+  // Compact button component
+  const CompactButton = ({ onClick, isDisabled, children }) => (
+    <motion.button
+      onClick={onClick}
+      disabled={isDisabled}
+      whileTap={!isDisabled ? { scale: 0.9 } : {}}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        border: 'none',
+        cursor: isDisabled ? 'default' : 'pointer',
+        opacity: isDisabled ? 0.3 : 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '1.125rem',
+        fontWeight: 400,
+        color: tokens.text.secondary,
+        background: isDark
+          ? 'rgba(255,255,255,0.06)'
+          : 'rgba(0,0,0,0.04)',
+        transition: 'background 0.15s ease, opacity 0.15s ease',
+      }}
+    >
+      {children}
+    </motion.button>
+  );
 
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 4 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       <Box
         sx={{
-          bgcolor: isDark ? tokens.bg.card : tokens.bg.cardSolid,
-          borderRadius: 4,
-          p: 3,
-          boxShadow: tokens.shadow.soft,
           width: '100%',
-          maxWidth: 340,
-          backdropFilter: isDark ? 'blur(20px)' : 'none',
-          border: isDark ? `1px solid ${tokens.surface.navBorder}` : 'none',
+          maxWidth: 280,
+          px: 2,
+          py: 1.5,
+          borderRadius: 3,
+          background: isDark
+            ? 'rgba(255,255,255,0.04)'
+            : 'rgba(255,255,255,0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
         }}
       >
-        {/* Time display with +/- buttons */}
+        {/* Time display row */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            mb: 2.5,
+            justifyContent: 'space-between',
+            mb: 1.5,
           }}
         >
-          {/* Minus button */}
-          <motion.button
+          <CompactButton
             onClick={handleDecrement}
-            disabled={disabled || value <= minTime}
-            whileHover={{ scale: disabled ? 1 : 1.05 }}
-            whileTap={{ scale: disabled ? 1 : 0.95 }}
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              border: 'none',
-              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
-              cursor: disabled || value <= minTime ? 'default' : 'pointer',
-              opacity: disabled || value <= minTime ? 0.4 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              color: tokens.text.secondary,
-            }}
+            isDisabled={disabled || value <= minTime}
           >
             −
-          </motion.button>
+          </CompactButton>
 
           {/* Time display */}
-          <Typography
+          <Box
             sx={{
-              fontFamily: '"SF Mono", Monaco, monospace',
-              fontSize: '2.25rem',
-              fontWeight: 700,
+              fontFamily: '"SF Mono", "Roboto Mono", monospace',
+              fontSize: '1.5rem',
+              fontWeight: 600,
               color: tokens.text.primary,
-              minWidth: 110,
-              textAlign: 'center',
               letterSpacing: '-0.02em',
+              minWidth: 80,
+              textAlign: 'center',
             }}
           >
-            {formatTime(value)}
-          </Typography>
+            <motion.span
+              key={timeStr}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.15 }}
+            >
+              {timeStr}
+            </motion.span>
+          </Box>
 
-          {/* Plus button */}
-          <motion.button
+          <CompactButton
             onClick={handleIncrement}
-            disabled={disabled || value >= maxTime}
-            whileHover={{ scale: disabled ? 1 : 1.05 }}
-            whileTap={{ scale: disabled ? 1 : 0.95 }}
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              border: 'none',
-              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
-              cursor: disabled || value >= maxTime ? 'default' : 'pointer',
-              opacity: disabled || value >= maxTime ? 0.4 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              color: tokens.text.secondary,
-            }}
+            isDisabled={disabled || value >= maxTime}
           >
             +
-          </motion.button>
+          </CompactButton>
         </Box>
 
         {/* Slider */}
-        <Slider
-          value={value}
-          onChange={(_, newValue) => onChange(newValue)}
-          disabled={disabled}
-          min={minTime}
-          max={maxTime}
-          step={step}
-          sx={{
-            color: tokens.accent.primary,
-            height: 6,
-            '& .MuiSlider-track': {
-              border: 'none',
-              borderRadius: 3,
-            },
-            '& .MuiSlider-rail': {
-              bgcolor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
-              borderRadius: 3,
-            },
-            '& .MuiSlider-thumb': {
-              width: 22,
-              height: 22,
-              bgcolor: isDark ? tokens.accent.primary : '#FFFFFF',
-              border: isDark ? 'none' : `2px solid ${tokens.accent.primary}`,
-              boxShadow: isDark
-                ? `0 0 10px ${tokens.accent.glow}`
-                : `0 2px 6px ${tokens.accent.glow}`,
-              '&:hover, &.Mui-focusVisible': {
-                boxShadow: isDark
-                  ? `0 0 16px ${tokens.accent.glow}`
-                  : `0 0 0 8px ${tokens.accent.glow}`,
-              },
-            },
+        <Box
+          ref={sliderRef}
+          onMouseDown={(e) => {
+            if (disabled) return;
+            setIsDragging(true);
+            handleSliderInteraction(e);
           }}
-        />
+          onMouseMove={(e) => isDragging && handleSliderInteraction(e)}
+          onMouseUp={() => setIsDragging(false)}
+          onMouseLeave={() => setIsDragging(false)}
+          onTouchStart={(e) => {
+            if (disabled) return;
+            setIsDragging(true);
+            handleSliderInteraction(e);
+          }}
+          onTouchMove={(e) => isDragging && handleSliderInteraction(e)}
+          onTouchEnd={() => setIsDragging(false)}
+          sx={{
+            position: 'relative',
+            height: 20,
+            cursor: disabled ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            touchAction: 'none',
+          }}
+        >
+          {/* Track */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              height: 4,
+              borderRadius: 2,
+              background: isDark
+                ? 'rgba(255,255,255,0.08)'
+                : 'rgba(0,0,0,0.06)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Fill */}
+            <motion.div
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.1, ease: 'easeOut' }}
+              style={{
+                height: '100%',
+                background: tokens.accent.primary,
+                borderRadius: 2,
+              }}
+            />
+          </Box>
 
-        {/* Min/Max labels */}
+          {/* Thumb */}
+          <motion.div
+            animate={{
+              left: `${progress}%`,
+              scale: isDragging ? 1.1 : 1,
+            }}
+            transition={{ duration: 0.1, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              width: 16,
+              height: 16,
+              marginLeft: -8,
+              borderRadius: '50%',
+              background: isDark
+                ? tokens.accent.primary
+                : '#FFFFFF',
+              border: isDark
+                ? 'none'
+                : `2px solid ${tokens.accent.primary}`,
+              boxShadow: isDark
+                ? `0 2px 6px rgba(0,0,0,0.3)`
+                : `0 2px 6px rgba(0,0,0,0.15)`,
+            }}
+          />
+        </Box>
+
+        {/* Labels */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            mt: 1,
+            mt: 0.75,
           }}
         >
-          <Typography
+          <Box
+            component="span"
             sx={{
-              fontSize: '0.6875rem',
+              fontSize: '0.625rem',
               color: tokens.text.tertiary,
               fontWeight: 500,
             }}
           >
-            1:00
-          </Typography>
-          <Typography
+            1 min
+          </Box>
+          <Box
+            component="span"
             sx={{
-              fontSize: '0.6875rem',
+              fontSize: '0.625rem',
               color: tokens.text.tertiary,
               fontWeight: 500,
             }}
           >
-            20:00
-          </Typography>
+            20 min
+          </Box>
         </Box>
       </Box>
     </motion.div>

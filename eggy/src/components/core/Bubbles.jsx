@@ -12,9 +12,13 @@ import { useTheme } from '../../context/ThemeContext';
  * States:
  * - Idle: Few slow bubbles, calm
  * - Cooking: Many fast bubbles, active boiling
+ *
+ * Modes:
+ * - fullscreen: Bubbles across entire screen (mechanical theme)
+ * - confined: Bubbles within specified bounds (cooking pot theme)
  */
 
-const Bubble = ({ config, windowHeight, isBoiling, tokens, isDark }) => {
+const Bubble = ({ config, windowHeight, isBoiling, tokens, isDark, confined }) => {
   const duration = isBoiling
     ? 1.5 + Math.random() * 2 // 1.5-3.5s when boiling
     : 6 + Math.random() * 4; // 6-10s when idle
@@ -52,16 +56,18 @@ const Bubble = ({ config, windowHeight, isBoiling, tokens, isDark }) => {
         border: '1px solid rgba(255,255,255,0.7)',
       };
 
+  const travelDistance = confined ? confined.height : windowHeight + 150;
+
   return (
     <motion.div
       initial={{
-        y: windowHeight + 20,
+        y: confined ? confined.height : windowHeight + 20,
         x: config.x,
         scale: 0.2,
         opacity: 0,
       }}
       animate={{
-        y: -150,
+        y: confined ? -20 : -150,
         scale: [0.2, 1, 0.9],
         opacity: [0, config.opacity, config.opacity * 0.8, 0],
       }}
@@ -73,7 +79,7 @@ const Bubble = ({ config, windowHeight, isBoiling, tokens, isDark }) => {
       }}
       style={{
         position: 'absolute',
-        bottom: 0,
+        bottom: confined ? 0 : 0,
         left: 0,
         width: config.size,
         height: config.size,
@@ -85,11 +91,20 @@ const Bubble = ({ config, windowHeight, isBoiling, tokens, isDark }) => {
   );
 };
 
-const Bubbles = ({ isBoiling = false }) => {
-  const { tokens, isDark } = useTheme();
+const Bubbles = ({
+  isBoiling = false,
+  confined = null, // { width, height } for pot-confined mode
+}) => {
+  const { tokens, isDark, themeStyle } = useTheme();
   const [windowHeight, setWindowHeight] = useState(800);
   const [bubbles, setBubbles] = useState([]);
   const idRef = useRef(0);
+
+  // Don't render fullscreen bubbles for cooking pot theme
+  // (that theme uses PotBubbles instead)
+  if (themeStyle === 'cookingPot' && !confined) {
+    return null;
+  }
 
   useEffect(() => {
     setWindowHeight(window.innerHeight);
@@ -103,10 +118,12 @@ const Bubbles = ({ isBoiling = false }) => {
     const count = isBoiling ? 45 : 8;
     const newBubbles = [];
 
+    const maxX = confined ? confined.width : window.innerWidth;
+
     for (let i = 0; i < count; i++) {
       newBubbles.push({
         id: idRef.current++,
-        x: Math.random() * (window.innerWidth - 60) + 30,
+        x: Math.random() * (maxX - 60) + 30,
         // Larger bubbles in dark mode for visibility
         size: isBoiling
           ? (isDark ? 20 : 16) + Math.random() * (isDark ? 40 : 36)
@@ -120,16 +137,20 @@ const Bubbles = ({ isBoiling = false }) => {
     }
 
     setBubbles(newBubbles);
-  }, [isBoiling, isDark]);
+  }, [isBoiling, isDark, confined]);
 
   return (
     <Box
       sx={{
-        position: 'fixed',
+        position: confined ? 'absolute' : 'fixed',
         inset: 0,
         overflow: 'hidden',
         pointerEvents: 'none',
         zIndex: 0,
+        ...(confined && {
+          width: confined.width,
+          height: confined.height,
+        }),
       }}
     >
       {bubbles.map((bubble) => (
@@ -140,6 +161,7 @@ const Bubbles = ({ isBoiling = false }) => {
           isBoiling={isBoiling}
           tokens={tokens}
           isDark={isDark}
+          confined={confined}
         />
       ))}
     </Box>

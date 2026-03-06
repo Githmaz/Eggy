@@ -7,16 +7,16 @@ import EggSelector from '../components/core/EggSelector';
 import CustomTimePicker from '../components/core/CustomTimePicker';
 import RotaryDial from '../components/core/RotaryDial';
 import EggSmash from '../components/core/EggSmash';
+import { EggCharacterContainer } from '../components/themes/eggCharacter';
 import { useTimerContext } from '../context/TimerContext';
 import { useTheme } from '../context/ThemeContext';
 
 /**
- * TIMER PAGE - PREMIUM MECHANICAL DESIGN
+ * TIMER PAGE - MULTI-THEME SUPPORT
  *
- * Features:
- * - Rotary dial for Start/Pause/Resume control
- * - Egg smash interaction on tap
- * - Premium mechanical feel
+ * Renders different layouts based on themeStyle:
+ * - mechanical: Premium rotary dial with bubbles
+ * - eggCharacter: Hot Spring - relaxing onsen spa aesthetic
  */
 
 // Secondary action button (Reset only)
@@ -75,7 +75,8 @@ const WaveShape = ({ tokens }) => (
   </Box>
 );
 
-const TimerPage = () => {
+// Mechanical theme layout (original design)
+const MechanicalLayout = () => {
   const {
     selectedPreset,
     customTime,
@@ -311,6 +312,18 @@ const TimerPage = () => {
       </EggSmash>
     </Box>
   );
+};
+
+const TimerPage = () => {
+  const { themeStyle } = useTheme();
+
+  // Render theme-specific layout
+  if (themeStyle === 'eggCharacter') {
+    return <EggCharacterContainer />;
+  }
+
+  // Default to mechanical theme
+  return <MechanicalLayout />;
 };
 
 export default TimerPage;

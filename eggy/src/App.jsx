@@ -6,11 +6,16 @@ import { TimerProvider } from './context/TimerContext';
 import { SplashPage, TimerPage, HistoryPage, BenefitsPage } from './pages';
 import BottomBar from './components/core/BottomBar';
 import TopNotification from './components/core/TopNotification';
-import ThemeToggle from './components/core/ThemeToggle';
+import ThemeMenu from './components/core/ThemeMenu';
 
 /**
- * EGGY APP - 2025 PREMIUM DESIGN
- * Light Cream / Dark Deep Blue Themes
+ * EGGY APP - MULTI-THEME SYSTEM
+ *
+ * Theme Styles:
+ * - Mechanical: Premium metallic dial
+ * - Cooking Pot: Fun kitchen theme
+ *
+ * Color Modes: Light / Dark
  */
 function App() {
   return (
@@ -19,7 +24,7 @@ function App() {
       <BrowserRouter>
         <TimerProvider>
           <TopNotification />
-          <ThemeToggle />
+          <ThemeMenu />
 
           <AnimatePresence mode="wait">
             <Routes>
