@@ -1,6 +1,5 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './context/ThemeContext';
 import { TimerProvider } from './context/TimerContext';
 import { SplashPage, TimerPage, HistoryPage, BenefitsPage } from './pages';
@@ -13,10 +12,24 @@ import ThemeMenu from './components/core/ThemeMenu';
  *
  * Theme Styles:
  * - Mechanical: Premium metallic dial
- * - Cooking Pot: Fun kitchen theme
+ * - Hot Spring: Fun onsen theme
  *
  * Color Modes: Light / Dark
  */
+
+// Routes wrapper
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<SplashPage />} />
+      <Route path="/timer" element={<TimerPage />} />
+      <Route path="/history" element={<HistoryPage />} />
+      <Route path="/benefits" element={<BenefitsPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider>
@@ -26,15 +39,7 @@ function App() {
           <TopNotification />
           <ThemeMenu />
 
-          <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<SplashPage />} />
-              <Route path="/timer" element={<TimerPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/benefits" element={<BenefitsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AnimatePresence>
+          <AppRoutes />
 
           <BottomBar />
         </TimerProvider>

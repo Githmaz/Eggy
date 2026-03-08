@@ -69,7 +69,7 @@ export const getThemeAnimations = (style) => {
 // Default theme settings
 export const defaultThemeSettings = {
   style: 'mechanical',
-  mode: 'light',
+  mode: 'dark',
 };
 
 // LocalStorage key

@@ -168,9 +168,6 @@ const ThemeMenu = () => {
   const menuRef = useRef(null);
   const location = useLocation();
 
-  // Hide on splash
-  if (location.pathname === '/') return null;
-
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -200,6 +197,9 @@ const ThemeMenu = () => {
   }, [isOpen]);
 
   const themes = Object.values(themeRegistry);
+
+  // Hide on splash - must be after all hooks
+  if (location.pathname === '/') return null;
 
   return (
     <Box
